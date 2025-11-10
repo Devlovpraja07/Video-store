@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - EarnApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .profile-card {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 2.5rem;
+        }
+        .stats-card {
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .coins-badge {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="home.html">
+                <i class="fas fa-coins me-2"></i>EarnApp
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="home.html"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="refer.html"><i class="fas fa-user-friends me-1"></i>Refer & Earn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="profile.html"><i class="fas fa-user me-1"></i>Profile</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="coinsDisplay">
+                            <span class="badge coins-badge">Loading...</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i><span id="userName">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card profile-card shadow-sm">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 id="profileName">Loading...</h3>
+                        <p class="mb-0" id="profileEmail">Loading...</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row text-center mb-4">
+                            <div class="col-md-4 mb-3">
+                                <div class="card stats-card bg-primary text-white h-100">
+                                    <div class="card-body">
+                                        <h3 id="totalCoins">0</h3>
+                                        <p class="mb-0">Total Coins</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card stats-card bg-success text-white h-100">
+                                    <div class="card-body">
+                                        <h3 id="totalEarnings">0</h3>
+                                        <p class="mb-0">Total Earnings</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card stats-card bg-info text-white h-100">
+                                    <div class="card-body">
+                                        <h3 id="tasksCompleted">0</h3>
+                                        <p class="mb-0">Tasks Completed</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>Personal Information</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-3">
+                                            <strong>Full Name:</strong>
+                                        </div>
+                                        <div class="col-sm-9" id="infoFullName">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-3">
+                                            <strong>Email:</strong>
+                                        </div>
+                                        <div class="col-sm-9" id="infoEmail">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-3">
+                                            <strong>Phone:</strong>
+                                        </div>
+                                        <div class="col-sm-9" id="infoPhone">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-3">
+                                            <strong>Joined Date:</strong>
+                                        </div>
+                                        <div class="col-sm-9" id="infoJoinedDate">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <strong>Referral Code:</strong>
+                                        </div>
+                                        <div class="col-sm-9" id="infoReferralCode">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>Account Status</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-6">
+                                            <strong>WhatsApp Connection:</strong>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <span id="whatsappStatus" class="badge bg-secondary">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-6">
+                                            <strong>Email Verification:</strong>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <span id="emailVerification" class="badge bg-secondary">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <strong>Account Status:</strong>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <span class="badge bg-success">Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button class="btn btn-outline-primary me-md-2" id="editProfileBtn">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </button>
+                            <button class="btn btn-primary" id="redeemCoinsBtn">
+                                <i class="fas fa-gift me-2"></i>Redeem Coins
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        // Check if user is logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                document.getElementById('userName').textContent = user.email;
+                
+                // Load user data
+                db.ref('users/' + user.uid).once('value').then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        // Update coins display
+                        document.getElementById('coinsDisplay').innerHTML = 
+                            `<span class="badge coins-badge">${userData.coins} Coins</span>`;
+                        
+                        // Update profile information
+                        document.getElementById('profileName').textContent = userData.fullName;
+                        document.getElementById('profileEmail').textContent = userData.email;
+                        
+                        document.getElementById('infoFullName').textContent = userData.fullName;
+                        document.getElementById('infoEmail').textContent = userData.email;
+                        document.getElementById('infoPhone').textContent = userData.phone;
+                        document.getElementById('infoReferralCode').textContent = userData.referralCode;
+                        
+                        // Format joined date
+                        if (userData.joinedDate) {
+                            const joinedDate = new Date(userData.joinedDate);
+                            document.getElementById('infoJoinedDate').textContent = joinedDate.toLocaleDateString();
+                        }
+                        
+                        // Update stats
+                        document.getElementById('totalCoins').textContent = userData.coins;
+                        document.getElementById('totalEarnings').textContent = userData.coins; // Simplified
+                        document.getElementById('tasksCompleted').textContent = userData.tasksCompleted || 0;
+                        
+                        // Update WhatsApp status
+                        const whatsappStatus = document.getElementById('whatsappStatus');
+                        if (userData.whatsappConnected) {
+                            whatsappStatus.textContent = 'Connected';
+                            whatsappStatus.classList.remove('bg-secondary');
+                            whatsappStatus.classList.add('bg-success');
+                        } else {
+                            whatsappStatus.textContent = 'Not Connected';
+                            whatsappStatus.classList.remove('bg-secondary');
+                            whatsappStatus.classList.add('bg-warning');
+                        }
+                        
+                        // Update email verification status
+                        const emailVerification = document.getElementById('emailVerification');
+                        if (user.emailVerified) {
+                            emailVerification.textContent = 'Verified';
+                            emailVerification.classList.remove('bg-secondary');
+                            emailVerification.classList.add('bg-success');
+                        } else {
+                            emailVerification.textContent = 'Not Verified';
+                            emailVerification.classList.remove('bg-secondary');
+                            emailVerification.classList.add('bg-warning');
+                        }
+                    }
+                });
+            } else {
+                // No user is signed in, redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Edit Profile
+        document.getElementById('editProfileBtn').addEventListener('click', function() {
+            alert('Edit profile feature will be available soon!');
+        });
+        
+        // Redeem Coins
+        document.getElementById('redeemCoinsBtn').addEventListener('click', function() {
+            alert('Coin redemption feature will be available soon!');
+        });
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
