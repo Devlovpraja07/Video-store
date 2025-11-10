@@ -1,232 +1,165 @@
-const express = require('express');
+// Firebase Functions for API endpoints
+// Deploy this to Firebase Cloud Functions
+
+const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const cors = require('cors');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+admin.initializeApp();
 
-// Initialize Firebase Admin
-const serviceAccount = require('./serviceAccountKey.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://rn-gfx-default-rtdb.asia-southeast1.firebasedatabase.app'
-});
-
-const db = admin.database();
-
-// API Routes
-
-// Get user data
-app.get('/api/user/:userId', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const userRef = db.ref('users/' + userId);
-    const snapshot = await userRef.once('value');
-    
-    if (snapshot.exists()) {
-      res.json({
-        success: true,
-        data: snapshot.val()
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+// API to get user data
+exports.getUser = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
-// Get user earnings
-app.get('/api/earnings/:userId', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const earningsRef = db.ref('earnings/' + userId);
-    const snapshot = await earningsRef.once('value');
-    
-    const earnings = snapshot.val() || {};
-    res.json({
-      success: true,
-      data: earnings
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
+    try {
+        const userId = context.auth.uid;
+        const userDoc = await admin.database().ref(`users/${userId}`).once('value');
+        
+        if (!userDoc.exists()) {
+            throw new functions.https.HttpsError('not-found', 'User not found');
+        }
 
-// Add earnings (for WhatsApp or tasks)
-app.post('/api/earnings/:userId', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const { type, amount } = req.body;
-    
-    const earningsRef = db.ref('earnings/' + userId);
-    const newEarningRef = earningsRef.push();
-    
-    await newEarningRef.set({
-      type: type,
-      amount: amount,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Update user's total coins
-    const userRef = db.ref('users/' + userId);
-    const userSnapshot = await userRef.once('value');
-    const userData = userSnapshot.val();
-    
-    await userRef.update({
-      coins: (userData.coins || 0) + amount
-    });
-    
-    res.json({
-      success: true,
-      message: 'Earnings added successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Get tasks
-app.get('/api/tasks', async (req, res) => {
-  try {
-    const tasksRef = db.ref('tasks');
-    const snapshot = await tasksRef.once('value');
-    
-    const tasks = snapshot.val() || {};
-    res.json({
-      success: true,
-      data: tasks
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Complete task
-app.post('/api/complete-task/:userId', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const { taskId } = req.body;
-    
-    // Get task details
-    const taskRef = db.ref('tasks/' + taskId);
-    const taskSnapshot = await taskRef.once('value');
-    
-    if (!taskSnapshot.exists()) {
-      return res.status(404).json({
-        success: false,
-        message: 'Task not found'
-      });
+        return {
+            success: true,
+            data: userDoc.val()
+        };
+    } catch (error) {
+        throw new functions.https.HttpsError('internal', error.message);
     }
-    
-    const task = taskSnapshot.val();
-    
-    // Add earnings
-    const earningsRef = db.ref('earnings/' + userId);
-    const newEarningRef = earningsRef.push();
-    
-    await newEarningRef.set({
-      type: `Task: ${task.title}`,
-      amount: task.reward,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Update user's total coins and tasks completed
-    const userRef = db.ref('users/' + userId);
-    const userSnapshot = await userRef.once('value');
-    const userData = userSnapshot.val();
-    
-    await userRef.update({
-      coins: (userData.coins || 0) + task.reward,
-      tasksCompleted: (userData.tasksCompleted || 0) + 1
-    });
-    
-    res.json({
-      success: true,
-      message: 'Task completed successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
 });
 
-// Referral system
-app.post('/api/use-referral', async (req, res) => {
-  try {
-    const { referralCode, newUserId } = req.body;
-    
-    // Find user with this referral code
-    const usersRef = db.ref('users');
-    const snapshot = await usersRef.orderByChild('referralCode').equalTo(referralCode).once('value');
-    
-    if (!snapshot.exists()) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invalid referral code'
-      });
+// API to add earnings
+exports.addEarnings = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
-    
-    const referrerData = snapshot.val();
-    const referrerId = Object.keys(referrerData)[0];
-    const referrer = referrerData[referrerId];
-    
-    // Update new user to mark as referred
-    const newUserRef = db.ref('users/' + newUserId);
-    await newUserRef.update({
-      referredBy: referralCode
-    });
-    
-    // Add bonus to new user
-    await newUserRef.update({
-      coins: (referrerData.coins || 0) + 50
-    });
-    
-    // Add referral earnings to referrer
-    const earningsRef = db.ref('earnings/' + referrerId);
-    await earningsRef.push().set({
-      type: 'Referral Bonus',
-      amount: 100,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Update referrer's coins
-    const referrerRef = db.ref('users/' + referrerId);
-    await referrerRef.update({
-      coins: (referrer.coins || 0) + 100
-    });
-    
-    res.json({
-      success: true,
-      message: 'Referral applied successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
+
+    try {
+        const { type, amount } = data;
+        const userId = context.auth.uid;
+
+        if (!type || !amount) {
+            throw new functions.https.HttpsError('invalid-argument', 'Type and amount are required');
+        }
+
+        const earningRef = admin.database().ref(`earnings/${userId}`).push();
+        await earningRef.set({
+            type: type,
+            amount: parseInt(amount),
+            timestamp: new Date().toISOString()
+        });
+
+        // Update user's total coins
+        const userRef = admin.database().ref(`users/${userId}`);
+        const userSnapshot = await userRef.once('value');
+        const userData = userSnapshot.val();
+
+        await userRef.update({
+            coins: (userData.coins || 0) + parseInt(amount)
+        });
+
+        return {
+            success: true,
+            message: 'Earnings added successfully'
+        };
+    } catch (error) {
+        throw new functions.https.HttpsError('internal', error.message);
+    }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`API server running on port ${PORT}`);
+// API to process referral
+exports.processReferral = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    try {
+        const { referralCode } = data;
+        const newUserId = context.auth.uid;
+
+        if (!referralCode) {
+            throw new functions.https.HttpsError('invalid-argument', 'Referral code is required');
+        }
+
+        // Find user with this referral code
+        const usersRef = admin.database().ref('users');
+        const snapshot = await usersRef.orderByChild('referralCode').equalTo(referralCode).once('value');
+
+        if (!snapshot.exists()) {
+            throw new functions.https.HttpsError('not-found', 'Invalid referral code');
+        }
+
+        const referrerData = snapshot.val();
+        const referrerId = Object.keys(referrerData)[0];
+        const referrer = referrerData[referrerId];
+
+        // Update new user to mark as referred
+        await admin.database().ref(`users/${newUserId}`).update({
+            referredBy: referralCode
+        });
+
+        // Add bonus to new user
+        await admin.database().ref(`users/${newUserId}`).update({
+            coins: (referrerData.coins || 0) + 50
+        });
+
+        // Add referral earnings to referrer
+        const earningsRef = admin.database().ref(`earnings/${referrerId}`).push();
+        await earningsRef.set({
+            type: 'Referral Bonus',
+            amount: 100,
+            timestamp: new Date().toISOString()
+        });
+
+        // Update referrer's coins
+        await admin.database().ref(`users/${referrerId}`).update({
+            coins: (referrer.coins || 0) + 100
+        });
+
+        return {
+            success: true,
+            message: 'Referral applied successfully'
+        };
+    } catch (error) {
+        throw new functions.https.HttpsError('internal', error.message);
+    }
+});
+
+// Scheduled function for WhatsApp earnings (runs every 20 minutes)
+exports.processWhatsAppEarnings = functions.pubsub.schedule('every 20 minutes').onRun(async (context) => {
+    try {
+        const usersRef = admin.database().ref('users');
+        const snapshot = await usersRef.once('value');
+        const users = snapshot.val();
+
+        if (!users) return null;
+
+        const promises = [];
+        Object.keys(users).forEach(userId => {
+            const user = users[userId];
+            if (user.whatsappConnected) {
+                const earningRef = admin.database().ref(`earnings/${userId}`).push();
+                promises.push(
+                    earningRef.set({
+                        type: 'WhatsApp Earnings',
+                        amount: 50,
+                        timestamp: new Date().toISOString()
+                    }).then(() => {
+                        return admin.database().ref(`users/${userId}`).update({
+                            coins: (user.coins || 0) + 50,
+                            lastWhatsAppEarning: new Date().toISOString()
+                        });
+                    })
+                );
+            }
+        });
+
+        await Promise.all(promises);
+        console.log(`Processed WhatsApp earnings for ${promises.length} users`);
+        return null;
+    } catch (error) {
+        console.error('Error processing WhatsApp earnings:', error);
+        return null;
+    }
 });
