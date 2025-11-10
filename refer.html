@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refer & Earn - EarnApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .referral-card {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .referral-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .referral-code {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 20px 0;
+        }
+        .stats-card {
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .coins-badge {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="home.html">
+                <i class="fas fa-coins me-2"></i>EarnApp
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="home.html"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="refer.html"><i class="fas fa-user-friends me-1"></i>Refer & Earn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.html"><i class="fas fa-user me-1"></i>Profile</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="coinsDisplay">
+                            <span class="badge coins-badge">Loading...</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i><span id="userName">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card referral-card shadow-sm">
+                    <div class="referral-header">
+                        <h2><i class="fas fa-user-friends me-2"></i>Refer & Earn</h2>
+                        <p>Invite your friends and earn 100 coins for each successful referral</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h4>Your Referral Code</h4>
+                            <div class="referral-code" id="referralCodeDisplay">
+                                Loading...
+                            </div>
+                            <button class="btn btn-primary" id="copyReferralCode">
+                                <i class="fas fa-copy me-2"></i>Copy Code
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>Share your referral link:</h5>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="referralLink" readonly>
+                                <button class="btn btn-outline-primary" id="copyLink">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center mb-4">
+                            <div class="col-md-4 mb-3">
+                                <div class="card stats-card bg-light h-100">
+                                    <div class="card-body">
+                                        <h3 id="totalReferrals">0</h3>
+                                        <p class="mb-0">Total Referrals</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card stats-card bg-light h-100">
+                                    <div class="card-body">
+                                        <h3 id="pendingReferrals">0</h3>
+                                        <p class="mb-0">Pending</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card stats-card bg-light h-100">
+                                    <div class="card-body">
+                                        <h3 id="earnedFromReferrals">0</h3>
+                                        <p class="mb-0">Coins Earned</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>How it works:</h5>
+                            <ol>
+                                <li>Share your referral code or link with friends</li>
+                                <li>Your friends sign up using your code</li>
+                                <li>They get 50 bonus coins when they join</li>
+                                <li>You get 100 coins when they complete their first task</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Your Referrals</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="referralsList">
+                                    <p class="text-center text-muted">No referrals yet. Start sharing your code!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        // Check if user is logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                document.getElementById('userName').textContent = user.email;
+                
+                // Load user data
+                db.ref('users/' + user.uid).once('value').then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        document.getElementById('coinsDisplay').innerHTML = 
+                            `<span class="badge coins-badge">${userData.coins} Coins</span>`;
+                        
+                        // Display referral code
+                        document.getElementById('referralCodeDisplay').textContent = userData.referralCode;
+                        document.getElementById('referralLink').value = 
+                            `${window.location.origin}/register.html?ref=${userData.referralCode}`;
+                        
+                        // Load referral stats
+                        loadReferralStats(user.uid, userData.referralCode);
+                    }
+                });
+            } else {
+                // No user is signed in, redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Copy referral code
+        document.getElementById('copyReferralCode').addEventListener('click', function() {
+            const referralCode = document.getElementById('referralCodeDisplay').textContent;
+            navigator.clipboard.writeText(referralCode).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+        
+        // Copy referral link
+        document.getElementById('copyLink').addEventListener('click', function() {
+            const referralLink = document.getElementById('referralLink');
+            referralLink.select();
+            navigator.clipboard.writeText(referralLink.value).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            });
+        });
+        
+        // Load referral stats
+        function loadReferralStats(userId, referralCode) {
+            // Get all users who used this referral code
+            db.ref('users').orderByChild('referredBy').equalTo(referralCode).once('value').then((snapshot) => {
+                const referrals = snapshot.val();
+                const totalReferrals = referrals ? Object.keys(referrals).length : 0;
+                
+                document.getElementById('totalReferrals').textContent = totalReferrals;
+                document.getElementById('pendingReferrals').textContent = totalReferrals; // Simplified - in real app you'd track status
+                document.getElementById('earnedFromReferrals').textContent = totalReferrals * 100;
+                
+                // Display referrals list
+                const referralsList = document.getElementById('referralsList');
+                if (referrals && Object.keys(referrals).length > 0) {
+                    let referralsHTML = '<div class="list-group">';
+                    Object.keys(referrals).forEach(key => {
+                        const referral = referrals[key];
+                        referralsHTML += `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${referral.fullName}</h6>
+                                    <small class="text-muted">${referral.email}</small>
+                                </div>
+                                <span class="badge bg-success">100 Coins Earned</span>
+                            </div>
+                        `;
+                    });
+                    referralsHTML += '</div>';
+                    referralsList.innerHTML = referralsHTML;
+                } else {
+                    referralsList.innerHTML = '<p class="text-center text-muted">No referrals yet. Start sharing your code!</p>';
+                }
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
