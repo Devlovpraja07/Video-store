@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EarnApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .whatsapp-icon {
+            color: #25D366;
+            font-size: 1.5rem;
+        }
+        .carousel-item {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .earning-option {
+            border-radius: 15px;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        .earning-option:hover {
+            transform: translateY(-5px);
+        }
+        .coins-badge {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="home.html">
+                <i class="fas fa-coins me-2"></i>EarnApp
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="home.html"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="refer.html"><i class="fas fa-user-friends me-1"></i>Refer & Earn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.html"><i class="fas fa-user me-1"></i>Profile</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="coinsDisplay">
+                            <span class="badge coins-badge">Loading...</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fab fa-whatsapp whatsapp-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i><span id="userName">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Image Slider -->
+        <div id="earnCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#earnCarousel" data-bs-slide-to="0" class="active"></button>
+                <button type="button" data-bs-target="#earnCarousel" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#earnCarousel" data-bs-slide-to="2"></button>
+            </div>
+            <div class="carousel-inner rounded">
+                <div class="carousel-item active">
+                    <div class="text-center">
+                        <h3>Earn 50 Coins Every 20 Minutes</h3>
+                        <p>Connect your WhatsApp and earn automatically</p>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="text-center">
+                        <h3>Complete Tasks & Earn More</h3>
+                        <p>Download apps and complete offers</p>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="text-center">
+                        <h3>Refer Friends & Get Bonus</h3>
+                        <p>Invite friends and earn 100 coins each</p>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#earnCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#earnCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+
+        <!-- Earning Options -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card earning-option shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fab fa-whatsapp fa-3x text-success"></i>
+                        </div>
+                        <h4 class="card-title">WhatsApp Earnings</h4>
+                        <p class="card-text">Connect your WhatsApp and earn 50 coins every 20 minutes automatically.</p>
+                        <div class="mb-3">
+                            <span class="badge bg-success">50 Coins / 20 min</span>
+                        </div>
+                        <button class="btn btn-success" id="connectWhatsApp">
+                            <i class="fab fa-whatsapp me-2"></i>Connect WhatsApp
+                        </button>
+                        <div class="mt-3" id="whatsappStatus">
+                            <small class="text-muted">Status: Not Connected</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card earning-option shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-tasks fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="card-title">Complete Tasks</h4>
+                        <p class="card-text">Download apps and complete simple tasks to earn coins instantly.</p>
+                        <div class="mb-3">
+                            <span class="badge bg-primary">10-500 Coins / Task</span>
+                        </div>
+                        <button class="btn btn-primary" id="viewTasks">
+                            <i class="fas fa-tasks me-2"></i>View Tasks
+                        </button>
+                        <div class="mt-3">
+                            <small class="text-muted">New tasks added daily</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Earnings -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Earnings</h5>
+            </div>
+            <div class="card-body">
+                <div id="recentEarnings">
+                    <p class="text-center text-muted">Loading your earnings history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        // Check if user is logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                document.getElementById('userName').textContent = user.email;
+                
+                // Load user data
+                db.ref('users/' + user.uid).once('value').then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        document.getElementById('coinsDisplay').innerHTML = 
+                            `<span class="badge coins-badge">${userData.coins} Coins</span>`;
+                        
+                        // Update WhatsApp status
+                        const whatsappStatus = document.getElementById('whatsappStatus');
+                        if (userData.whatsappConnected) {
+                            whatsappStatus.innerHTML = '<small class="text-success">Status: Connected</small>';
+                            document.getElementById('connectWhatsApp').textContent = 'WhatsApp Connected';
+                            document.getElementById('connectWhatsApp').classList.remove('btn-success');
+                            document.getElementById('connectWhatsApp').classList.add('btn-outline-success');
+                        }
+                        
+                        // Load recent earnings
+                        loadRecentEarnings(user.uid);
+                    }
+                });
+            } else {
+                // No user is signed in, redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Connect WhatsApp functionality
+        document.getElementById('connectWhatsApp').addEventListener('click', function() {
+            const user = auth.currentUser;
+            if (user) {
+                // Update user data in Firebase
+                db.ref('users/' + user.uid).update({
+                    whatsappConnected: true,
+                    whatsappConnectedAt: new Date().toISOString()
+                }).then(() => {
+                    document.getElementById('whatsappStatus').innerHTML = '<small class="text-success">Status: Connected</small>';
+                    document.getElementById('connectWhatsApp').textContent = 'WhatsApp Connected';
+                    document.getElementById('connectWhatsApp').classList.remove('btn-success');
+                    document.getElementById('connectWhatsApp').classList.add('btn-outline-success');
+                    
+                    alert('WhatsApp connected successfully! You will start earning coins automatically.');
+                });
+            }
+        });
+        
+        // View Tasks
+        document.getElementById('viewTasks').addEventListener('click', function() {
+            alert('Tasks feature will be available soon!');
+        });
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            });
+        });
+        
+        // Load recent earnings
+        function loadRecentEarnings(userId) {
+            db.ref('earnings/' + userId).limitToLast(5).once('value').then((snapshot) => {
+                const earningsContainer = document.getElementById('recentEarnings');
+                const earnings = snapshot.val();
+                
+                if (earnings && Object.keys(earnings).length > 0) {
+                    let earningsHTML = '<div class="list-group">';
+                    Object.keys(earnings).forEach(key => {
+                        const earning = earnings[key];
+                        earningsHTML += `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${earning.type}</h6>
+                                    <small class="text-muted">${new Date(earning.timestamp).toLocaleString()}</small>
+                                </div>
+                                <span class="badge coins-badge">+${earning.amount} Coins</span>
+                            </div>
+                        `;
+                    });
+                    earningsHTML += '</div>';
+                    earningsContainer.innerHTML = earningsHTML;
+                } else {
+                    earningsContainer.innerHTML = '<p class="text-center text-muted">No earnings yet. Start earning by completing tasks!</p>';
+                }
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
